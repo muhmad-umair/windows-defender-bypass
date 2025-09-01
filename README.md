@@ -42,21 +42,6 @@ By using, copying, or modifying this code, **you agree** that:
 
 > ⚠️ The sample uses `-ExecutionPolicy Bypass`. In real environments, this is a risky setting and often monitored. Keep this **only** for isolated lab study.
 
----
-
-## 📦 Repository Structure
-
-/RShell
-├─ src/
-│ └─ Program.cs # Main implementation
-├─ README.md # You are here
-├─ LICENSE # MIT (see below)
-└─ .gitignore
-
-yaml
-Copy code
-
-*(Adjust paths to match your repo.)*
 
 ---
 
