@@ -13,45 +13,19 @@ It exists **strictly for educational and defensive research**—to study .NET ne
 - Improve defensive detections and incident response.
 
 **You must not** use this software to access systems without explicit written permission.  
+
 By using, copying, or modifying this code, **you agree** that:
 - You have legal authorization to run any tests you perform.
 - You accept full responsibility for outcomes and compliance with all applicable laws and policies.
 - The authors and contributors are **not liable** for misuse, damage, or legal consequences.
 
-> This README intentionally omits operational exploitation steps (e.g., setting up listeners, evasion tactics) to avoid facilitating misuse.
-
 ---
 
-## ✨ What You’ll Learn
-
-- TCP client basics in .NET (`System.Net.Sockets.TcpClient`)
-- Stream handling with `StreamReader` / `StreamWriter`
-- Process creation and I/O redirection via `System.Diagnostics.Process`
-- Event-driven output handling (`OutputDataReceived`, `ErrorDataReceived`)
-- Blue-team visibility considerations and defensive controls
-
----
-
-## 🧩 How It Works (High-Level)
-
-1. Creates a TCP client and connects to a specified IP and port.
-2. Launches **PowerShell** as a child process (hidden window).
-3. Redirects PowerShell **stdin/stdout/stderr** through the TCP stream.
-4. Forwards remote input to PowerShell; returns command output back over the connection.
-5. Ends when the remote side sends `exit` or the process terminates.
-
-> ⚠️ The sample uses `-ExecutionPolicy Bypass`. In real environments, this is a risky setting and often monitored. Keep this **only** for isolated lab study.
-
-
----
-
-## 🛠️ Build (Windows)
-
-You can build with Visual Studio or the .NET SDK. This project targets Windows due to the PowerShell path in `Program.cs`.
+## 🛠️ Build Instructions
 
 ### Option A — Visual Studio
 1. Create a new **Console App** (C#).
-2. Replace the default `Program.cs` with the one in `src/Program.cs`.
+2. Replace the default `Program.cs` with the one in this repository.
 3. Build in **Release** mode.
 
 ### Option B — .NET SDK (CLI)
@@ -72,61 +46,72 @@ If you change the PowerShell path or add cross-platform support, document those 
 ▶️ Runtime Parameters
 The program expects two arguments:
 
-php-template
+bash
 Copy code
 RShell.exe <ip> <port>
-<ip>: Destination IP (string)
+<ip> : Destination IP (string)
 
-<port>: Destination port (integer)
+<port> : Destination port (integer)
 
-Note: This is for lab use only in environments you own/control and are authorized to test. Do not point this at networks or hosts without written consent.
+⚠️ Note: This is for lab use only in environments you own/control and are authorized to test.
+Do not point this at networks or hosts without written consent.
 
 🔍 Code Walkthrough
 Key elements in Program.cs:
 
-Networking: TcpClient client = new TcpClient(); client.Connect(ip, port);
+Networking:
 
-Streams: Wraps the network stream with StreamReader/StreamWriter for line-oriented I/O.
+csharp
+Copy code
+TcpClient client = new TcpClient();
+client.Connect(ip, port);
+Streams:
+Wraps the network stream with StreamReader/StreamWriter for line-oriented I/O.
 
-Process: Launches PowerShell via ProcessStartInfo with:
+Process:
+Launches PowerShell via ProcessStartInfo with:
 
-UseShellExecute = false
+csharp
+Copy code
+p.StartInfo.UseShellExecute = false;
+p.StartInfo.RedirectStandardInput = true;
+p.StartInfo.RedirectStandardOutput = true;
+p.StartInfo.RedirectStandardError = true;
+p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+Event Handlers:
+Subscribes to OutputDataReceived / ErrorDataReceived to forward output lines back over the socket.
 
-Redirection for StandardInput, StandardOutput, StandardError
+Loop:
+Reads remote lines and writes them to:
 
-Hidden window (ProcessWindowStyle.Hidden)
-
-Event Handlers: Subscribes to OutputDataReceived / ErrorDataReceived to forward output lines back over the socket.
-
-Loop: Reads remote lines and writes to p.StandardInput until exit.
-
-Consider adding robust error handling, logging to a local file (in lab), and graceful shutdown behavior for educational completeness.
-
+csharp
+Copy code
+p.StandardInput.WriteLine(userInput);
 🧪 Safe Lab & Testing Guidance (High-Level)
 To keep this ethical and safe:
 
-Isolate your lab. Use local VMs or containers on a closed network with no internet egress. Snapshots help you revert quickly.
+Isolate your lab. Use local VMs or containers on a closed network with no internet egress.
 
 Document consent. If collaborating, get written permission (scope, dates, systems, data handling).
 
 Least privilege. Use non-admin test accounts and non-production systems/data.
 
-Observe & learn. Pair your runs with monitoring (process creation logs, PowerShell logging, network telemetry) to understand blue-team visibility.
+Observe & learn. Pair runs with monitoring (process creation logs, PowerShell logging, network telemetry).
 
-No operationalization here. This README does not include listener setup or exploitation steps. If you don’t already know how to safely simulate endpoints in a closed lab, focus on the code and defensive detections first.
+No operationalization. This README does not include listener setup or exploitation steps.
 
 🛡️ Blue-Team Notes (Defensive Study)
 When running in a lab, explore how the following controls observe activity:
 
-PowerShell Logging: Script Block, Module, and Transcription logging.
+PowerShell Logging: Script Block, Module, and Transcription logging
 
-AMSI (Antimalware Scan Interface): Scans PowerShell content before execution.
+AMSI (Antimalware Scan Interface): Scans PowerShell content before execution
 
-Process Creation Events: E.g., Windows Event ID 4688 / Sysmon Event ID 1.
+Process Creation Events: Windows Event ID 4688 / Sysmon Event ID 1
 
-Network Telemetry: Egress connections, unusual destinations/ports.
+Network Telemetry: Egress connections, unusual destinations/ports
 
-Command-line Auditing: Visibility into -ExecutionPolicy Bypass usage.
+Command-line Auditing: Visibility into -ExecutionPolicy Bypass usage
 
 Questions to ask in your lab:
 
@@ -137,53 +122,62 @@ What telemetry is missing?
 How could defenders detect similar behavior earlier?
 
 ⚙️ Configuration Ideas (for Learning)
-If you extend the project (in your lab), consider educational toggles:
+If you extend the project (in your lab), consider adding:
 
-PowerShell Path: Make configurable for different Windows versions.
+Configurable PowerShell path for different Windows versions
 
-Timeouts/Retries: Connection timeouts, backoff.
+Timeouts/Retries for connections
 
-Graceful Exit: Signals to terminate child process cleanly.
+Graceful Exit signals to close the child process cleanly
 
-Logging (Lab Only): Optional local log for teaching/troubleshooting.
+Optional local logging (lab only) for troubleshooting
 
-Authentication/TLS (Lab Only): Explore secure channels and identity—useful for defensive design discussions.
+Authentication/TLS (lab only) to explore secure communication
 
-Do not add evasion features or anti-forensic behavior. Such contributions will be rejected.
+⚠️ Do not add evasion features or anti-forensic behavior. Such contributions will be rejected.
 
 🚫 Known Limitations
-Windows-only due to the hardcoded PowerShell path.
+Windows-only (hardcoded PowerShell path)
 
-No encryption/authentication on the TCP channel (lab artifact).
+No encryption/authentication on the TCP channel
 
-Minimal error handling—for clarity in learning.
+Minimal error handling
 
-No reconnection logic or persistence (by design).
+No reconnection logic or persistence (by design)
 
-Requires interactive remote input (no job control).
+Requires interactive remote input (no job control)
 
 ❓ FAQ
 Q: Why omit listener/exploitation instructions?
-A: To avoid facilitating misuse. This project is for understanding code paths and defensive visibility, not for operationalization.
+A: To avoid misuse. This project is for understanding code paths and defensive visibility, not for exploitation.
 
 Q: Can I change -ExecutionPolicy Bypass?
-A: Yes—this is a learning artifact. In your lab, experiment with stricter settings and observe behavior and logs.
+A: Yes — this is just for lab use. Try stricter settings and study logs.
 
 Q: Will you accept PRs adding stealth/evasion?
-A: No. This repo is focused on education and defense.
+A: No. Only educational or defensive improvements are accepted.
 
 🤝 Contributing
 Keep changes educational and defense-oriented.
 
-Don’t submit features meant to bypass security controls.
+Do not submit features meant to bypass security controls.
 
-Include clear documentation and rationales in PRs.
+Include documentation and rationales in PRs.
 
 🔐 Disclosure & Safety Policy
-If you discover a security issue in this repository, please open a private report (do not post PoCs that operationalize attacks).
-For real-world vulnerabilities found elsewhere, follow responsible disclosure with the affected vendor/owner.
+If you discover a security issue in this repository:
+
+Do not post it publicly.
+
+Open a private report (via GitHub Security Advisory, if available).
+
+Or contact the maintainer by email.
+
+For real-world vulnerabilities elsewhere, follow responsible disclosure with the affected vendor.
 
 📄 License (MIT)
+vbnet
+Copy code
 Copyright (c) 2025
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
